@@ -157,9 +157,24 @@ app.listen(PORT, () => {
 });
 
 // Add Single Property (For Agents / Admins)
-app.post('/api/properties', async (req, res) => {
+app.post('/api/properties', upload.single('photo'), async (req, res) => {
   try {
-    const newProperty = new Property(req.body);
+    const { title, category, location, price, period, amenities } = req.body;
+    const imageUrl = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : (req.body.imageUrl || '');
+
+    const newProperty = new Property({
+      title,
+      category,
+      location,
+      price: Number(price || 0),
+      period: period || 'per month',
+      amenities: typeof amenities === 'string'
+        ? amenities.split(',').map((item) => item.trim()).filter(Boolean)
+        : Array.isArray(amenities) ? amenities : [],
+      imageUrl,
+      status: 'AVAILABLE'
+    });
+
     await newProperty.save();
     res.status(201).json(newProperty);
   } catch (err) {
